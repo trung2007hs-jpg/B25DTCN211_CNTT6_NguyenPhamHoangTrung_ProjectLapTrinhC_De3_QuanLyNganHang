@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include <time.h>
 
 // --- CAU TRUC DU LIEU ---
@@ -18,6 +19,20 @@ int accountCount = 0;
 
 // --- HAM HO TRO ---
 
+//Kiem tra so dien thoai co 10 chu so khong
+int isAllDigitsAndLength10(const char *str) {
+    // 1. Kiem tra do dai
+    if (strlen(str) != 10) {
+        return 0; // Khong phai 10 ky tu
+    }
+    // 2. Kiem tra tung ky tu co phai la chu so khong
+    for (int i = 0; str[i] != '\0'; i++) {
+        if (!isdigit(str[i])) {
+            return 0; // Co ky tu khong phai so
+        }
+    }
+    return 1; // Hop le
+}
 // Kiem tra ID co ton tai khong. Tra ve index hoac -1.
 int findAccountIndex(const char* id) {
     for (int i = 0; i < accountCount; i++) {
@@ -88,7 +103,10 @@ void createAccount() {
         printf("Nhap so dien thoai: ");
         fgets(newAcc.phone, sizeof(newAcc.phone), stdin);
         newAcc.phone[strcspn(newAcc.phone, "\n")] = 0; // Thay \n bang \0
-
+        if (!isAllDigitsAndLength10(newAcc.phone)) {
+            printf("Loi: So dien thoai phai co CHINH XAC 10 chu so va chi chua so.\n");
+            continue;
+        }
         if (strlen(newAcc.phone) == 0) {
             printf("Loi: So dien thoai khong duoc rong.\n");
             continue;
@@ -148,6 +166,10 @@ void updateAccount() {
         tempPhone[strcspn(tempPhone, "\n")] = 0; // Thay \n bang \0
 
         if (strlen(tempPhone) > 0) {
+        	if (!isAllDigitsAndLength10(tempPhone)) {
+                printf("Loi: So dien thoai moi phai co CHINH XAC 10 chu so va chi chua so.\n");
+                continue;
+            }
             // Kiem tra trung lap, loai tru chinh no (index)
             if (checkPhoneDuplication(tempPhone, index) == 1) {
                 printf("Loi: So dien thoai moi da bi trung lap.\n");
@@ -171,20 +193,48 @@ void updateAccount() {
 
 //MENU
 int main() {
-    int choice;
+    int choice=-1;
+    char inputMenu[10];
     do {
-        printf("\n========== MINI BANKING SYSTEM ==========\n");
-        printf("1.Them tai khoan\n");
-        printf("2.Cap nhat thong tin\n");
-        printf("0.Thoat\n");
+        printf("\n========== Quan ly ngan hang ==========\n");
+        printf("|1.Them tai khoan                     |\n");
+        printf("|2.Cap nhat thong tin                 |\n");
+        printf("|3.Quan ly trang thai                 |\n");
+        printf("|4.Tra cuu                            |\n");
+        printf("|5.Danh sach                          |\n");
+        printf("|6.Sap xep danh sach                  |\n");
+        printf("|7.Giao dich chuyen khoan             |\n");
+        printf("|8.Lich su giao dich                  |\n");
+        printf("|0.Thoat                              |\n");
+        printf("=======================================\n");
         printf("Nhap lua chon: ");
-        scanf("%d", &choice);
-        getchar();
+        //Kiem tra lua chon phai la so
+        fgets(inputMenu, sizeof(inputMenu), stdin);
+        inputMenu[strcspn(inputMenu, "\n")] = '\0';
+        int isNumber = 1;
+        for (int i = 0; i < strlen(inputMenu); i++) {
+            if (inputMenu[i] < '0' || inputMenu[i] > '9') {
+                isNumber = 0;
+                break;
+            }
+        }
+        if (!isNumber) {
+            printf("Loi: Lua chon phai la so.\n");
+            continue;
+        }
+        choice = atoi(inputMenu);
+        
         switch(choice) {
             case 1: createAccount(); 
 			    break;
             case 2: updateAccount(); 
 			    break;
+			case 3:
+			case 4:
+			case 5:
+			case 6:
+			case 7:
+			case 8:
             case 0: 
 			    printf("\nCam on vi da den!\n");
 				break; 
@@ -195,3 +245,4 @@ int main() {
 
     return 0;
 }
+
