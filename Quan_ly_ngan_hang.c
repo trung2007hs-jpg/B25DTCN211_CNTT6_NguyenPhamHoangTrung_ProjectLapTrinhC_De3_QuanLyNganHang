@@ -53,8 +53,7 @@ void createAccount() {
     // 1. Nhap ID (Su dung fgets) & Validation
     do {
         printf("Nhap Account ID: ");
-        if (fgets(inputBuffer, sizeof(inputBuffer), stdin) == NULL) 
-		continue;
+        fgets(inputBuffer, sizeof(inputBuffer), stdin);
         inputBuffer[strcspn(inputBuffer, "\n")] = 0; // Thay \n bang \0
         
         if (strlen(inputBuffer) == 0) {
@@ -73,7 +72,7 @@ void createAccount() {
     isValid = 0;
     do {
         printf("Nhap ho va ten: ");
-        if (fgets(newAcc.fullName, sizeof(newAcc.fullName), stdin) == NULL) continue;
+        fgets(newAcc.fullName, sizeof(newAcc.fullName), stdin);
         newAcc.fullName[strcspn(newAcc.fullName, "\n")] = 0; // Thay \n bang \0
 
         if (strlen(newAcc.fullName) == 0) {
@@ -87,7 +86,7 @@ void createAccount() {
     isValid = 0;
     do {
         printf("Nhap so dien thoai: ");
-        if (fgets(newAcc.phone, sizeof(newAcc.phone), stdin) == NULL) continue;
+        fgets(newAcc.phone, sizeof(newAcc.phone), stdin);
         newAcc.phone[strcspn(newAcc.phone, "\n")] = 0; // Thay \n bang \0
 
         if (strlen(newAcc.phone) == 0) {
@@ -109,7 +108,7 @@ void createAccount() {
     printf("\nThanh cong: Them tai khoan ID %s thanh cong!\n", newAcc.accountId);
 }
 
-// --- F02: CAP NHAT THONG TIN ---
+//CAP NHAT THONG TIN
 void updateAccount() {
     char id[20];
     char tempName[50], tempPhone[15];
@@ -119,7 +118,7 @@ void updateAccount() {
 
     // 1. Nhap ID can sua (Su dung fgets) & Validation
     printf("Nhap Account ID can sua: ");
-    if (fgets(id, sizeof(id), stdin) == NULL) return;
+    fgets(id, sizeof(id), stdin);
     id[strcspn(id, "\n")] = 0; // Thay \n bang \0
 
     int index = findAccountIndex(id);
@@ -133,7 +132,7 @@ void updateAccount() {
 
     // 2. Nhap Ho Ten moi (Su dung fgets)
     printf("Nhap ho va ten moi: ");
-    if (fgets(tempName, sizeof(tempName), stdin) == NULL) return;
+    fgets(tempName, sizeof(tempName), stdin);
     tempName[strcspn(tempName, "\n")] = 0; // Thay \n bang \0
 
     if (strlen(tempName) > 0) {
@@ -145,7 +144,7 @@ void updateAccount() {
     int phoneValid = 0;
     do {
         printf("Nhap so dien thoai moi: ");
-        if (fgets(tempPhone, sizeof(tempPhone), stdin) == NULL) return;
+        fgets(tempPhone, sizeof(tempPhone), stdin);
         tempPhone[strcspn(tempPhone, "\n")] = 0; // Thay \n bang \0
 
         if (strlen(tempPhone) > 0) {
@@ -196,4 +195,3 @@ int main() {
 
     return 0;
 }
-
