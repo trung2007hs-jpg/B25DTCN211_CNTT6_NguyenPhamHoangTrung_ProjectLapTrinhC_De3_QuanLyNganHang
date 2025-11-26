@@ -144,18 +144,31 @@ void updateAccount() {
         printf("Loi: Khong tim thay tai khoan voi ID: %s.\n", id);
         return;
     }
-
+    
+    if (accountList[index].status == 0) {
+        printf("Loi: Tai khoan dang bi khoa. Khong the chinh sua thong tin.\n");
+        return;
+    }
+    
     Account* currentAcc = &accountList[index];
     printf("\nThong tin hien tai: Ten: %s | SDT: %s\n", currentAcc->fullName, currentAcc->phone);
 
     // 2. Nhap Ho Ten moi (Su dung fgets)
-    printf("Nhap ho va ten moi: ");
-    fgets(tempName, sizeof(tempName), stdin);
-    tempName[strcspn(tempName, "\n")] = 0; // Thay \n bang \0
 
-    if (strlen(tempName) > 0) {
-        strcpy(currentAcc->fullName, tempName);
-        changesMade++;
+    while (1) {
+        printf("Nhap ho va ten moi: ");
+        fgets(tempName, sizeof(tempName), stdin);
+        tempName[strcspn(tempName, "\n")] = '\0'; // thay \n bang \0
+
+        if (strlen(tempName) == 0) {
+            printf("Loi: Ho ten moi khong duoc de rong.\n");
+        } else {
+            // sao chep an toan vao fullName
+            strncpy(currentAcc->fullName, tempName, sizeof(currentAcc->fullName) - 1);
+            currentAcc->fullName[sizeof(currentAcc->fullName) - 1] = '\0'; // dam bao ket thuc chuoi
+            changesMade++;
+            break;
+        }
     }
 
     // 3. Nhap So dien thoai moi (Su dung fgets) & Validation
@@ -191,12 +204,172 @@ void updateAccount() {
     }
 }
 
+//QUAN LY TRANG THAI
+void manageStatus() {
+    char id[20];
+    char answer[10];
+
+    printf("\n----- QUAN LY TRANG THAI TAI KHOAN (LOCK / UNLOCK) -----\n");
+
+    // 1. Nhap ID
+    printf("Nhap account ID: ");
+    fgets(id, sizeof(id), stdin);
+    id[strcspn(id, "\n")] = '\0';
+
+    // 2. Kiem tra ton tai
+    int index = findAccountIndex(id);
+    if (index == -1) {
+        printf("Loi: Khong tim thay tai khoan.\n");
+        return;
+    }
+
+    // 3. Xac dinh trang thai hien tai
+    if (accountList[index].status == 1) {
+        // Tai khoan dang mo, xac nhan khoa
+        while (1) {
+            printf("Tai khoan dang HOAT DONG. Ban muon KHOA tai khoan? (Y/N): ");
+            fgets(answer, sizeof(answer), stdin);
+            answer[strcspn(answer, "\n")] = '\0';
+
+            if (strlen(answer) == 0) {
+                printf("Loi: Vui long nhap Y hoac N.\n");
+                continue;
+            }
+
+            char c = answer[0];
+
+            if (c == 'Y' || c == 'y') {
+                accountList[index].status = 0;
+                printf("\nThanh cong: Tai khoan da duoc KHOA.\n");
+                printf("Tai khoan nay khong the thuc hien giao dich chuyen tien.\n");
+                return;
+            } 
+            else if (c == 'N' || c == 'n') {
+                printf("\nThong bao: Huy thao tac.\n");
+                return;
+            } 
+            else {
+                printf("Loi: Chi duoc nhap Y/N.\n");
+            }
+        }
+    } 
+    
+    else {
+        // Tai khoan dang khoa, xac nhan mo
+        while (1) {
+            printf("Tai khoan dang BI KHOA. Ban muon MO KHOA tai khoan? (Y/N): ");
+            fgets(answer, sizeof(answer), stdin);
+            answer[strcspn(answer, "\n")] = '\0';
+
+            if (strlen(answer) == 0) {
+                printf("Loi: Vui long nhap Y hoac N.\n");
+                continue;
+            }
+
+            char c = answer[0];
+
+            if (c == 'Y' || c == 'y') {
+                accountList[index].status = 1;
+                printf("\nThanh cong: Tai khoan da duoc MO KHOA.\n");
+                return;
+            } 
+            else if (c == 'N' || c == 'n') {
+                printf("\nThong bao: Huy thao tac.\n");
+                return;
+            } 
+            else {
+                printf("Loi: Chi duoc nhap Y/N.\n");
+            }
+        }
+    }
+}
+
+//HAM HO TRO CHO CHUC NANG TRA CUU
+
+// Ham ho tro: Chuyen chuoi thanh chu thuong de so sanh khong phan biet chu hoa/chu thuong
+void toLowerString(char *dest, const char *src, size_t maxLen) {
+    size_t len = strlen(src);
+    // Dam bao khong vuot qua kich thuoc mang dich
+    if (len >= maxLen) len = maxLen - 1;
+
+    for (size_t i = 0; i < len; i++) {
+        dest[i] = tolower((unsigned char)src[i]);
+    }
+    dest[len] = '\0';
+}
+
+// Ham ho tro: In header bang (da can chinh)
+void printTableHeader() {
+    printf("\n+--------------------+----------------------------------+--------------+------------+------------+\n");
+    printf("| Account ID         | Ho va Ten                        | So dien thoai| So Du      | Trang thai |\n");
+    printf("+--------------------+----------------------------------+--------------+------------+------------+\n");
+}
+
+// Ham ho tro: In thong tin mot tai khoan (da can chinh)
+void printAccount(const Account acc) {
+    printf("| %-18s | %-32s | %-12s | %-10.2lf | %-10s |\n",
+           acc.accountId, acc.fullName, acc.phone, acc.balance,
+           acc.status == 1 ? "Active" : "Locked");
+}
+
+//CHUC NANG TRA CUU
+void searchAccount() {
+    char keyword[50];
+    Account foundAccounts[100]; // Mang tam luu cac tai khoan tim thay
+    int foundCount = 0;
+    char lowerKeyword[50]; 
+    char lowerFullName[50]; 
+    char lowerAccountId[20]; 
+
+    printf("\n--- TRA CUU TAI KHOAN (ID hoac Ten) ---\n");
+
+    // 1. Nhap tu khoa (Input theo so do)
+    printf("Nhap tu khoa (ID hoac Ten): ");
+    fgets(keyword, sizeof(keyword), stdin);
+    keyword[strcspn(keyword, "\n")] = '\0';
+
+    if (strlen(keyword) == 0) {
+        printf("Loi: Tu khoa khong duoc rong.\n");
+        return;
+    }
+
+    // Chuyen tu khoa sang chu thuong de tim kiem khong phan biet hoa/thuong
+    toLowerString(lowerKeyword, keyword, sizeof(lowerKeyword));
+
+    // 2. Xu ly logic tim kiem
+    for (int i = 0; i < accountCount; i++) {
+        // Chuyen ID va Ten tai khoan sang chu thuong de so sanh
+        toLowerString(lowerAccountId, accountList[i].accountId, sizeof(lowerAccountId));
+        toLowerString(lowerFullName, accountList[i].fullName, sizeof(lowerFullName));
+
+        // So sanh: Tu khoa co trong ID HOAC trong Ten khong? (Tim kiem mot phan - strstr)
+        if (strstr(lowerAccountId, lowerKeyword) != NULL || strstr(lowerFullName, lowerKeyword) != NULL) {
+            foundAccounts[foundCount++] = accountList[i];
+        }
+    }
+
+    // 3. Hien thi ket qua (Quyet dinh/Output theo so do)
+    if (foundCount == 0) {
+        // Dung (Dung) -> Thong bao that bai (Output - That bai)
+        printf("\n=> THONG BAO: Khong co ket qua phu hop voi tu khoa '%s'.\n", keyword);
+    } else {
+        // Sai (Sai) -> Hien thi danh sach phu hop (Output - Thanh cong)
+        printf("\n=> KET QUA: %d tai khoan phu hop voi tu khoa '%s':\n", foundCount, keyword);
+        printTableHeader(); 
+        for (int i = 0; i < foundCount; i++) {
+            printAccount(foundAccounts[i]); 
+        }
+        // Dong cuoi cung phai khop voi header
+        printf("+--------------------+----------------------------------+--------------+------------+------------+\n"); 
+    }
+}
+
 //MENU
 int main() {
     int choice=-1;
     char inputMenu[10];
     do {
-        printf("\n========== Quan ly ngan hang ==========\n");
+        printf("\n+--------- Quan ly ngan hang ---------+\n");
         printf("|1.Them tai khoan                     |\n");
         printf("|2.Cap nhat thong tin                 |\n");
         printf("|3.Quan ly trang thai                 |\n");
@@ -206,7 +379,7 @@ int main() {
         printf("|7.Giao dich chuyen khoan             |\n");
         printf("|8.Lich su giao dich                  |\n");
         printf("|0.Thoat                              |\n");
-        printf("=======================================\n");
+        printf("+-------------------------------------+\n");
         printf("Nhap lua chon: ");
         //Kiem tra lua chon phai la so
         fgets(inputMenu, sizeof(inputMenu), stdin);
@@ -233,8 +406,10 @@ int main() {
 			    break;
             case 2: updateAccount(); 
 			    break;
-			case 3:
-			case 4:
+			case 3: manageStatus();
+			    break;
+			case 4: searchAccount();
+			    break;
 			case 5:
 			case 6:
 			case 7:
