@@ -211,6 +211,10 @@ int main() {
         //Kiem tra lua chon phai la so
         fgets(inputMenu, sizeof(inputMenu), stdin);
         inputMenu[strcspn(inputMenu, "\n")] = '\0';
+        if (strlen(inputMenu) == 0) {
+            printf("Loi: Lua chon khong duoc rong.\n");
+            continue; // quay lai menu
+        }
         int isNumber = 1;
         for (int i = 0; i < strlen(inputMenu); i++) {
             if (inputMenu[i] < '0' || inputMenu[i] > '9') {
