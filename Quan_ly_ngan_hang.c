@@ -152,12 +152,7 @@ void updateAccount() {
         printf("Loi: Khong tim thay tai khoan voi ID: %s.\n", id);
         return;
     }
-    
-    if (accountList[index].status == 0) {
-        printf("Loi: Tai khoan dang bi khoa. Khong the chinh sua thong tin.\n");
-        return;
-    }
-    
+        
     Account* currentAcc = &accountList[index];
     printf("\nThong tin hien tai: Ten: %s | SDT: %s\n", currentAcc->fullName, currentAcc->phone);
 
