@@ -135,10 +135,18 @@ void updateAccount() {
     printf("\n--- CAP NHAT THONG TIN ---\n");
 
     // 1. Nhap ID can sua (Su dung fgets) & Validation
-    printf("Nhap Account ID can sua: ");
-    fgets(id, sizeof(id), stdin);
-    id[strcspn(id, "\n")] = 0; // Thay \n bang \0
-
+    while(1) {
+	    printf("Nhap Account ID can sua: ");
+        fgets(id, sizeof(id), stdin);
+        id[strcspn(id, "\n")] = 0; // Thay \n bang \0
+        
+        if(id, strlen(id) == 0) {
+    	    printf("Loi. ID khong duoc rong.\n");
+    	    continue;
+	    }
+	    break;
+	}
+	
     int index = findAccountIndex(id);
     if (index == -1) {
         printf("Loi: Khong tim thay tai khoan voi ID: %s.\n", id);
@@ -212,17 +220,25 @@ void manageStatus() {
     printf("\n----- QUAN LY TRANG THAI TAI KHOAN (LOCK / UNLOCK) -----\n");
 
     // 1. Nhap ID
-    printf("Nhap account ID: ");
-    fgets(id, sizeof(id), stdin);
-    id[strcspn(id, "\n")] = '\0';
-
+    while(1) {
+        printf("Nhap account ID: ");
+        fgets(id, sizeof(id), stdin);
+        id[strcspn(id, "\n")] = '\0';
+        
+		if(id, strlen(id) == 0) {
+			printf("Loi. ID khong duoc rong.\n");
+			continue;
+		}
+		break;
+    }
     // 2. Kiem tra ton tai
     int index = findAccountIndex(id);
     if (index == -1) {
         printf("Loi: Khong tim thay tai khoan.\n");
         return;
     }
-
+    
+    
     // 3. Xac dinh trang thai hien tai
     if (accountList[index].status == 1) {
         // Tai khoan dang mo, xac nhan khoa
