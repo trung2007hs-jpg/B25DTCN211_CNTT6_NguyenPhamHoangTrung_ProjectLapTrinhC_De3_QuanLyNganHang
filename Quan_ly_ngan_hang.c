@@ -4,7 +4,7 @@
 #include <ctype.h>
 #include <time.h>
 
-// --- CAU TRUC DU LIEU ---
+//CAU TRUC DU LIEU
 typedef struct {
     char accountId[20];     // Ma tai khoan
     char fullName[50];      // Ho va ten
@@ -13,11 +13,17 @@ typedef struct {
     int status;             // Trang thai (1=Active, 0=Locked)
 } Account;
 
-// --- BIEN TOAN CUC ---
-Account accountList[100];       // Luu toi da 100 tai khoan
-int accountCount = 0;
+//BIEN TOAN CUC
+Account accountList[100] = {     // Luu toi da 100 tai khoan
+    {"CNTT0001", "Nguyen Van An", "0912345678", 5000000, 1},
+    {"CNTT0002", "Tran Thi Binh", "0931122334", 12500000, 0},
+    {"CNTT0003", "Le Hoang Nam", "0928877665", 2300000, 1},
+    {"KTQD0001", "Pham Bao Long", "0965566778", 7600000, 1},
+    {"KTQD0002", "Vo Hong Dao", "0909988776", 11000000, 0}
+}; 
+int accountCount = 5;
 
-// --- HAM HO TRO ---
+//HAM HO TRO
 
 //Kiem tra so dien thoai co 10 chu so khong
 int isAllDigitsAndLength10(const char *str) {
@@ -56,8 +62,7 @@ int checkPhoneDuplication(const char* phone, int excludeIndex) {
 //Them tai khoan moi
 void createAccount() {
     if (accountCount >= 100) {
-        printf("\nLoi: Mang da day. Khong the them tai khoan moi.\n");
-        return;
+        printf("\nLoi: Danh sach da day. Khong the them tai khoan moi.\n");
     }
 
     Account newAcc;
@@ -311,14 +316,14 @@ void toLowerString(char *dest, const char *src, size_t maxLen) {
 
 // Ham ho tro: In header bang (da can chinh)
 void printTableHeader() {
-    printf("\n+--------------------+----------------------------------+--------------+------------+------------+\n");
-    printf("| Account ID         | Ho va Ten                        | So dien thoai| So Du      | Trang thai |\n");
-    printf("+--------------------+----------------------------------+--------------+------------+------------+\n");
+    printf("\n+--------------------+----------------------------------+--------------+----------------+------------+\n");
+    printf("| Account ID         | Ho va Ten                        | So dien thoai| So Du          | Trang thai |\n");
+    printf("+--------------------+----------------------------------+--------------+----------------+------------+\n");
 }
 
 // Ham ho tro: In thong tin mot tai khoan (da can chinh)
 void printAccount(const Account acc) {
-    printf("| %-18s | %-32s | %-12s | %-10.2lf | %-10s |\n",
+    printf("| %-18s | %-32s | %-12s | %-14.2lf | %-10s |\n",
            acc.accountId, acc.fullName, acc.phone, acc.balance,
            acc.status == 1 ? "Active" : "Locked");
 }
@@ -371,8 +376,146 @@ void searchAccount() {
             printAccount(foundAccounts[i]); 
         }
         // Dong cuoi cung phai khop voi header
-        printf("+--------------------+----------------------------------+--------------+------------+------------+\n"); 
+        printf("+--------------------+----------------------------------+--------------+----------------+------------+\n"); 
     }
+}
+
+//DANH SACH PHAN TRANG
+void listAllAccounts() {
+    // Kiem tra danh sach rong
+    if (accountCount == 0) {
+        printf("Khong co tai khoan nao trong he thong.\n");
+        return;
+    }
+
+    int page = 1;
+    int index = 0;
+
+    while (index < accountCount) {
+
+        printf("\n===== TRANG %d =====\n", page);
+        printTableHeader();
+
+        // In toi da 10 tai khoan moi trang
+        for (int i = 0; i < 10 && index < accountCount; i++, index++) {
+            printAccount(accountList[index]);
+        }
+
+        printf("+--------------------+----------------------------------+--------------+----------------+------------+\n");
+
+        // Neu con tai khoan thi cho bam Enter de xem trang tiep theo
+        if (index < accountCount) {
+            printf("\nBam Enter de xem trang tiep theo...");
+            getchar();
+            page++;
+        }
+    }
+
+    printf("\nDa hien thi het danh sach tai khoan.\n");
+}
+
+// HAM HO TRO: Trich xuat Ten (last name) de phuc vu sap xep dung cach
+// Ham nay tim vi tri cua khoang trang cuoi cung trong chuoi Ho ten.
+// Sau do, no tra ve con tro chi vao ky tu ngay sau khoang trang do, 
+// chinh la chuoi Ten can thiet de so sanh.
+//
+// Dau vao (const char* fullName): Chuoi Ho ten day du (Vi du: "Nguyen Van An").
+// Dau ra (const char*): Tra ve con tro toi ky tu dau tien cua Ten (Vi du: "An").
+const char* extractLastName(const char* fullName) {
+    // strrchr() tim vi tri cuoi cung cua ky tu ' ' trong chuoi
+    const char* lastSpace = strrchr(fullName, ' ');
+    
+    // Kiem tra truong hop khong co khoang trang nao
+    if (lastSpace == NULL) {
+        // Neu khong tim thay, Ho ten chi co mot tu, tra ve toan bo Ho ten.
+        return fullName; 
+    }
+
+    // lastSpace + 1: Tra ve chuoi bat dau tu ky tu ngay sau khoang trang cuoi cung (la Ten)
+    return lastSpace + 1; 
+}
+
+// CHUC NANG 6: SAP XEP DANH SACH
+void sortAccounts() {
+    int ch;
+    char inputCh[5];
+    int validChoice = 0;
+
+    printf("\n--- SAP XEP DANH SACH ---\n");
+
+    // 1. Vong lap de nhap va kiem tra lua chon
+    do {
+        printf("1. Sap xep theo HO TEN (Uu tien Ten, sau do den Ho ten day du)\n");
+        printf("2. Sap xep theo SO DU (Tang dan)\n");
+        printf("Nhap lua chon: ");
+
+        if (fgets(inputCh, sizeof(inputCh), stdin) == NULL) {
+            printf("Loi: Khong doc duoc du lieu.\n");
+            return;
+        }
+        inputCh[strcspn(inputCh, "\n")] = '\0';
+        
+        if(strlen(inputCh)==0) {
+        	printf("Loi. Lua chon khong duoc rong\n");
+        	continue;
+		}
+		
+        if(strlen(inputCh) != 1 || (inputCh[0] != '1' && inputCh[0] != '2')) {
+            printf("Loi: Lua chon khong hop le (chi duoc nhap 1 hoac 2). Vui long nhap lai.\n");
+            continue;
+        }
+
+        ch = atoi(inputCh);
+        validChoice = 1;
+    } while (validChoice == 0);
+
+
+    // 2. Thuc hien sap xep Bubble Sort
+    for (int i = 0; i < accountCount - 1; i++) {
+        for (int j = i + 1; j < accountCount; j++) {
+            
+            int needSwap = 0;
+            
+            switch (ch) {
+                case 1:
+                {
+                    // SAP XEP THEO TEN (LAST NAME)
+                    // Can co ham ho tro 'extractLastName' o dau file.
+                    const char* lastName_i = extractLastName(accountList[i].fullName);
+                    const char* lastName_j = extractLastName(accountList[j].fullName);
+
+                    int nameCompare = strcmp(lastName_i, lastName_j);
+
+                    if (nameCompare > 0) {
+                        needSwap = 1; // Ten A lon hon Ten B -> swap
+                    } else if (nameCompare == 0) {
+                        // Ten trung nhau -> Sap xep tiep theo toan bo Ho ten (de co thu tu on dinh)
+                        int fullCompare = strcmp(accountList[i].fullName, accountList[j].fullName);
+                        if (fullCompare > 0) {
+                            needSwap = 1;
+                        }
+                    }
+                    break;
+                }
+                
+                case 2:
+                // SAP XEP THEO SO DU (TANG DAN)
+                    if (accountList[i].balance > accountList[j].balance) {
+                        needSwap = 1;
+                    }
+                    break;
+            }
+
+            if (needSwap) {
+                // Thao tac hoan vi (Swap)
+                Account temp = accountList[i];
+                accountList[i] = accountList[j];
+                accountList[j] = temp;
+            }
+        }
+    }
+
+    printf("\nDa sap xep danh sach xong. Vui long chon chuc nang 5 (Danh sach) de kiem tra.\n");
 }
 
 //MENU
@@ -421,8 +564,10 @@ int main() {
 			    break;
 			case 4: searchAccount();
 			    break;
-			case 5:
-			case 6:
+			case 5: listAllAccounts();
+			    break;
+			case 6: sortAccounts();
+			    break;
 			case 7:
 			case 8:
             case 0: 
