@@ -30,12 +30,14 @@ Account accountList[100] = {     // Luu toi da 100 tai khoan
     {"CNTT0004", "Nguyen Tuan Anh", "0964363488", 120000000, 1},
     {"CNTT0005", "Hoang Hai Yen", "0991234657", 0, 0},
     {"CNTT0006", "Le Van Dai", "0932627658", 500000, 1},
+    {"CNTT0007", "Tran Van Phong", "0954637374", 20000000, 1},
     {"KTQD0001", "Pham Bao Long", "0965566778", 7600000, 1},
     {"KTQD0002", "Vo Hong Dao", "0909988776", 11000000, 0},
     {"KTQD0003", "Lo Vi Song", "0964657283", 990000, 1},
-    {"KTQD0004", "Le Thanh Vinh", "0945467385", 20000000, 0}
+    {"KTQD0004", "Le Thanh Vinh", "0945467385", 20000000, 0},
+    {"KTQD0005", "Nguyen Trinh Cong Truong", "0983547384", 2500000000, 1}
 }; 
-int accountCount = 10;
+int accountCount = 12;
 
 // Khoi tao mang Transaction va bien dem
 Transaction transactionList[200] = {}; // Luu toi da 200 giao dich
