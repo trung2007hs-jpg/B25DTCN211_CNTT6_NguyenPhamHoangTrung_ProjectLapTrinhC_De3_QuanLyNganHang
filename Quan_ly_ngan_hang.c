@@ -13,15 +13,33 @@ typedef struct {
     int status;             // Trang thai (1=Active, 0=Locked)
 } Account;
 
+typedef struct {
+    char transId[20];
+    char senderId[20];
+    char receiverId[20];
+    double amount;
+    char type[20];
+    char datetime[30];
+} Transaction;
+
 //BIEN TOAN CUC
 Account accountList[100] = {     // Luu toi da 100 tai khoan
     {"CNTT0001", "Nguyen Van An", "0912345678", 5000000, 1},
     {"CNTT0002", "Tran Thi Binh", "0931122334", 12500000, 0},
     {"CNTT0003", "Le Hoang Nam", "0928877665", 2300000, 1},
+    {"CNTT0004", "Nguyen Tuan Anh", "0964363488", 120000000, 1},
+    {"CNTT0005", "Hoang Hai Yen", "0991234657", 0, 0},
+    {"CNTT0006", "Le Van Dai", "0932627658", 500000, 1},
     {"KTQD0001", "Pham Bao Long", "0965566778", 7600000, 1},
-    {"KTQD0002", "Vo Hong Dao", "0909988776", 11000000, 0}
+    {"KTQD0002", "Vo Hong Dao", "0909988776", 11000000, 0},
+    {"KTQD0003", "Lo Vi Song", "0964657283", 990000, 1},
+    {"KTQD0004", "Le Thanh Vinh", "0945467385", 20000000, 0}
 }; 
-int accountCount = 5;
+int accountCount = 10;
+
+// Khoi tao mang Transaction va bien dem
+Transaction transactionList[200] = {}; // Luu toi da 200 giao dich
+int transactionCount = 0;
 
 //HAM HO TRO
 
@@ -384,138 +402,381 @@ void searchAccount() {
 void listAllAccounts() {
     // Kiem tra danh sach rong
     if (accountCount == 0) {
-        printf("Khong co tai khoan nao trong he thong.\n");
+        printf("Khong co tai khoan trong he thong.\n");
+        return; // Thoat ham
+    }
+
+    int page = 1; // Trang hien tai
+    int totalPages = (accountCount + 9) / 10; // Tong so trang, cong them 9 de lam tron len
+    char choice[10]; // Luu lua chon nguoi dung (N, P, Q)
+
+    while (1) { // Vong lap chinh cho phan trang
+        // Tinh chi so bat dau va ket thuc cho trang hien tai
+        int startIndex = (page - 1) * 10; // Tai khoan dau trang
+        int endIndex = startIndex + 10;   // Tai khoan cuoi trang
+        if (endIndex > accountCount) endIndex = accountCount; // Khong vuot qua so luong tai khoan
+
+        // Hien thi thong tin trang hien tai
+        printf("\n===== TRANG %d / %d =====\n", page, totalPages);
+        printTableHeader(); // In header bang
+
+        // In tung tai khoan trong trang
+        for (int i = startIndex; i < endIndex; i++) {
+            printAccount(accountList[i]); // In thong tin tung tai khoan
+        }
+
+        // Dong ket thuc bang
+        printf("+--------------------+----------------------------------+--------------+----------------+------------+\n");
+
+        // Hien thi lua chon: N = next page, P = previous page, Q = thoat
+        printf("\nNhap N de xem trang tiep theo, P de quay lai trang truoc, Q de thoat: ");
+        fgets(choice, sizeof(choice), stdin);                   // Doc tu ban phim
+        choice[strcspn(choice, "\n")] = 0;                     // Loai bo ky tu \n
+
+        if (strlen(choice) == 0) 
+		continue; // Neu nguoi dung chi bam Enter -> lap lai
+
+        if (choice[0] == 'N' || choice[0] == 'n') {           // Chon trang tiep theo
+            if (page < totalPages) {                          // Neu chua phai trang cuoi
+                page++;                                       // Tang trang
+            } else {
+                printf("Ban dang o trang cuoi.\n");           // Bao dang o trang cuoi
+            }
+        } else if (choice[0] == 'P' || choice[0] == 'p') {    // Chon quay lai trang truoc
+            if (page > 1) {                                   // Neu chua phai trang dau
+                page--;                                       // Giam trang
+            } else {
+                printf("Ban dang o trang dau.\n");            // Bao dang o trang dau
+            }
+        } else if (choice[0] == 'Q' || choice[0] == 'q') {    // Chon thoat
+		    printf("Da thoat trang\n");
+            break;                                            // Thoat vong lap -> ket thuc ham
+        } else {
+            printf("Lua chon khong hop le.\n");               // Nhap sai ky tu
+        }
+    }
+}
+
+//SAP XEP DANH SACH
+void sortAccounts() {
+    char input[10];   // Mang de luu lua chon nguoi dung (chuoi nhap)
+    int choice;       // Bien chuyen chuoi sang so (1 hoac 2)
+
+    // 1. Nhap lua chon hop le
+    while (1) {
+        printf("\n=== SAP XEP TAI KHOAN ===\n");
+        printf("1. Sap xep theo so du giam dan\n");    // Lua chon 1: theo so du giam dan
+        printf("2. Sap xep theo ho ten (A-Z)\n");      // Lua chon 2: theo ho ten A->Z
+        printf("Nhap lua chon: ");
+        
+        fgets(input, sizeof(input), stdin);               // Doc chuoi nguoi dung nhap
+        input[strcspn(input, "\n")] = 0;                 // Loai bo ky tu \n o cuoi chuoi
+
+        // Kiem tra rong
+        if (strlen(input) == 0) {
+            printf("Loi: Lua chon khong duoc de trong.\n");
+            continue; // quay lai nhap lai
+        }
+
+        // Kiem tra hop le: phai chi nhap '1' hoac '2'
+        if (strlen(input) != 1 || (input[0] != '1' && input[0] != '2')) {
+            printf("Loi: Lua chon khong hop le. Vui long nhap 1 hoac 2.\n");
+            continue; // quay lai nhap lai
+        }
+
+        choice = input[0] - '0';   // Chuyen ky tu '1' hoac '2' sang so nguyen 1 hoac 2
+        break;                      // Nhap hop le -> thoat vong lap
+    }
+
+    // 2. Bubble Sort
+    // Su dung thuat toan Bubble Sort: duyet tung cap tai khoan, doi cho neu khong dung thu tu
+    for (int i = 0; i < accountCount - 1; i++) {       // Vong lap ngoai: tu tai khoan dau den tai khoan thu 2 cuoi
+        for (int j = i + 1; j < accountCount; j++) {   // Vong lap trong: so sanh i voi tat ca cac phan tu sau no
+            int needSwap = 0; // Bien kiem tra co can doi cho hay khong
+
+            switch (choice) {
+                case 1: // Lua chon 1: Sap xep theo so du giam dan
+                    if (accountList[i].balance < accountList[j].balance) {
+                        needSwap = 1; // Neu so du i < so du j -> doi cho
+                    }
+                    break;
+
+                case 2: // Lua chon 2: Sap xep theo ho ten A->Z
+                    if (strcmp(accountList[i].fullName, accountList[j].fullName) > 0) {
+                        needSwap = 1; // Neu ho ten i dung sau ho ten j trong bang chu cai -> doi cho
+                    }
+                    break;
+            }
+
+            // Hoan vi neu can
+            if (needSwap) {
+                Account temp = accountList[i];   // Luu tam tai khoan i
+                accountList[i] = accountList[j]; // Gan tai khoan j vao vi tri i
+                accountList[j] = temp;           // Gan tai khoan i da luu tam vao vi tri j
+            }
+        }
+    }
+
+    printf("\nSap xep thanh cong.\n"); // Bao nguoi dung da sap xep xong
+}
+
+//HAM HO TRO GIAO DICH
+
+ //Tao ID giao dich tu dong theo format T-yyyyMMdd-xxxxx
+ //idBuffer: Vung nho de luu ID duoc tao ra
+
+void generateTransactionId(char *idBuffer) {
+    time_t now = time(NULL);
+    struct tm *t = localtime(&now);
+
+    // Dinh dang thoi gian (yyyyMMdd)
+    char dateStr[9];
+    strftime(dateStr, sizeof(dateStr), "%Y%m%d", t);
+
+    // Dung so luong giao dich hien tai + 1 de tao so thu tu (00001, 00002...)
+    sprintf(idBuffer, "T-%s-%05d", dateStr, transactionCount + 1);
+}
+
+// Lay thoi gian hien tai (yyyy-MM-dd HH:mm:ss)
+// dtBuffer: Vung nho de luu chuoi thoi gian
+
+void getCurrentDateTime(char *dtBuffer) {
+    time_t now = time(NULL);
+    struct tm *t = localtime(&now);
+    strftime(dtBuffer, 30, "%Y-%m-%d %H:%M:%S", t);
+}
+
+// Them giao dich vao danh sach (Luu log giao dich)
+//senderId: ID nguoi gui
+// receiverId: ID nguoi nhan
+// amount: So tien
+//type: Loai ("Out" hoac "In")
+
+void addTransaction(const char* senderId, const char* receiverId, double amount, const char* type) {
+    if (transactionCount >= 200) {
+        printf("\nLoi: Lich su giao dich da day. Khong the them log moi.\n");
         return;
     }
 
-    int page = 1;
-    int index = 0;
+    Transaction newTrans;
+    generateTransactionId(newTrans.transId); // Tao ID tu dong
+    strcpy(newTrans.senderId, senderId);
+    strcpy(newTrans.receiverId, receiverId);
+    newTrans.amount = amount;
+    strcpy(newTrans.type, type); 
 
-    while (index < accountCount) {
+    getCurrentDateTime(newTrans.datetime); // Lay thoi gian hien tai
 
-        printf("\n===== TRANG %d =====\n", page);
-        printTableHeader();
-
-        // In toi da 10 tai khoan moi trang
-        for (int i = 0; i < 10 && index < accountCount; i++, index++) {
-            printAccount(accountList[index]);
-        }
-
-        printf("+--------------------+----------------------------------+--------------+----------------+------------+\n");
-
-        // Neu con tai khoan thi cho bam Enter de xem trang tiep theo
-        if (index < accountCount) {
-            printf("\nBam Enter de xem trang tiep theo...");
-            getchar();
-            page++;
-        }
-    }
-
-    printf("\nDa hien thi het danh sach tai khoan.\n");
+    transactionList[transactionCount++] = newTrans; // Them vao mang va tang bien dem
 }
 
-// HAM HO TRO: Trich xuat Ten (last name) de phuc vu sap xep dung cach
-// Ham nay tim vi tri cua khoang trang cuoi cung trong chuoi Ho ten.
-// Sau do, no tra ve con tro chi vao ky tu ngay sau khoang trang do, 
-// chinh la chuoi Ten can thiet de so sanh.
-//
-// Dau vao (const char* fullName): Chuoi Ho ten day du (Vi du: "Nguyen Van An").
-// Dau ra (const char*): Tra ve con tro toi ky tu dau tien cua Ten (Vi du: "An").
-const char* extractLastName(const char* fullName) {
-    // strrchr() tim vi tri cuoi cung cua ky tu ' ' trong chuoi
-    const char* lastSpace = strrchr(fullName, ' ');
-    
-    // Kiem tra truong hop khong co khoang trang nao
-    if (lastSpace == NULL) {
-        // Neu khong tim thay, Ho ten chi co mot tu, tra ve toan bo Ho ten.
-        return fullName; 
-    }
+//Giao dich Chuyen khoan
+// Thuc hien tru tien, cong tien va luu log, voi kiem tra nhap lieu chat che
+void transferMoney() {
+    char senderId[20], receiverId[20], inputAmount[30];
+    double amount;
+    int senderIndex, receiverIndex;
+    int isValidInput = 0; // Bien co kiem tra input cho vong lap nhap lai
 
-    // lastSpace + 1: Tra ve chuoi bat dau tu ky tu ngay sau khoang trang cuoi cung (la Ten)
-    return lastSpace + 1; 
-}
+    printf("\n--- GIAO DICH CHUYEN KHOAN ---\n");
 
-// CHUC NANG 6: SAP XEP DANH SACH
-void sortAccounts() {
-    int ch;
-    char inputCh[5];
-    int validChoice = 0;
-
-    printf("\n--- SAP XEP DANH SACH ---\n");
-
-    // 1. Vong lap de nhap va kiem tra lua chon
+    // 1. NHAP VA KIEM TRA ID NGUOI GUI (senderId)
     do {
-        printf("1. Sap xep theo HO TEN (Uu tien Ten, sau do den Ho ten day du)\n");
-        printf("2. Sap xep theo SO DU (Tang dan)\n");
-        printf("Nhap lua chon: ");
+        printf("Nhap ID nguoi gui (senderId): ");
+        fgets(senderId, sizeof(senderId), stdin);
+        senderId[strcspn(senderId, "\n")] = 0;
 
-        if (fgets(inputCh, sizeof(inputCh), stdin) == NULL) {
-            printf("Loi: Khong doc duoc du lieu.\n");
-            return;
+        if (strlen(senderId) == 0) {
+            printf("Loi: Account ID nguoi gui khong duoc de trong.\n");
+            continue; 
         }
-        inputCh[strcspn(inputCh, "\n")] = '\0';
+
+        senderIndex = findAccountIndex(senderId);
+        if (senderIndex == -1) {
+            printf("Loi: Khong tim thay tai khoan nguoi gui voi ID: %s.\n", senderId);
+            continue; 
+        }
+
+        if (accountList[senderIndex].status == 0) {
+            printf("Loi: Tai khoan GUI (%s) dang bi KHOA (Locked). Khong the thuc hien giao dich.\n", senderId);
+            return; 
+        }
+        isValidInput = 1;
+    } while (isValidInput == 0);
+
+    // 2. NHAP VA KIEM TRA ID NGUOI NHAN (receiverId)
+    isValidInput = 0;
+    do {
+        printf("Nhap ID nguoi nhan (receiverId): ");
+        fgets(receiverId, sizeof(receiverId), stdin);
+        receiverId[strcspn(receiverId, "\n")] = 0;
+
+        if (strlen(receiverId) == 0) {
+            printf("Loi: Account ID nguoi nhan khong duoc de trong.\n");
+            continue;
+        }
         
-        if(strlen(inputCh)==0) {
-        	printf("Loi. Lua chon khong duoc rong\n");
-        	continue;
-		}
-		
-        if(strlen(inputCh) != 1 || (inputCh[0] != '1' && inputCh[0] != '2')) {
-            printf("Loi: Lua chon khong hop le (chi duoc nhap 1 hoac 2). Vui long nhap lai.\n");
+        if (strcmp(senderId, receiverId) == 0) {
+            printf("Loi: Khong the chuyen tien cho chinh minh. Vui long nhap ID khac.\n");
             continue;
         }
 
-        ch = atoi(inputCh);
-        validChoice = 1;
-    } while (validChoice == 0);
+        receiverIndex = findAccountIndex(receiverId);
+        if (receiverIndex == -1) {
+            printf("Loi: Khong tim thay tai khoan nguoi nhan voi ID: %s.\n", receiverId);
+            continue;
+        }
+        isValidInput = 1;
+    } while (isValidInput == 0);
 
+    // 3. NHAP VA KIEM TRA SO TIEN (amount)
+    isValidInput = 0;
+    do {
+        printf("Nhap so tien can chuyen (amount): ");
+        fgets(inputAmount, sizeof(inputAmount), stdin);
+        inputAmount[strcspn(inputAmount, "\n")] = 0;
 
-    // 2. Thuc hien sap xep Bubble Sort
-    for (int i = 0; i < accountCount - 1; i++) {
-        for (int j = i + 1; j < accountCount; j++) {
-            
-            int needSwap = 0;
-            
-            switch (ch) {
-                case 1:
-                {
-                    // SAP XEP THEO TEN (LAST NAME)
-                    // Can co ham ho tro 'extractLastName' o dau file.
-                    const char* lastName_i = extractLastName(accountList[i].fullName);
-                    const char* lastName_j = extractLastName(accountList[j].fullName);
+        if (strlen(inputAmount) == 0) {
+            printf("Loi: So tien chuyen khong duoc de trong.\n");
+            continue;
+        }
+        
+        amount = atof(inputAmount);
+        if (amount <= 0) {
+            printf("Loi: So tien chuyen phai la so va lon hon 0.\n");
+            continue;
+        }
 
-                    int nameCompare = strcmp(lastName_i, lastName_j);
+        if (amount > accountList[senderIndex].balance) {
+            printf("Loi: So du hien tai (%0.2lf VND) khong du de thuc hien giao dich %0.2lf VND.\n", 
+                   accountList[senderIndex].balance, amount);
+            continue; 
+        }
+        isValidInput = 1; 
+    } while (isValidInput == 0);
 
-                    if (nameCompare > 0) {
-                        needSwap = 1; // Ten A lon hon Ten B -> swap
-                    } else if (nameCompare == 0) {
-                        // Ten trung nhau -> Sap xep tiep theo toan bo Ho ten (de co thu tu on dinh)
-                        int fullCompare = strcmp(accountList[i].fullName, accountList[j].fullName);
-                        if (fullCompare > 0) {
-                            needSwap = 1;
-                        }
-                    }
-                    break;
-                }
-                
-                case 2:
-                // SAP XEP THEO SO DU (TANG DAN)
-                    if (accountList[i].balance > accountList[j].balance) {
-                        needSwap = 1;
-                    }
-                    break;
-            }
+    // 4. THUC HIEN LOGIC XU LY GIAO DICH (Transaction Logic)
+    
+    printf("\nThuc hien chuyen tien...\n");
+    accountList[senderIndex].balance -= amount; // Tru tien nguoi gui
+    accountList[receiverIndex].balance += amount; // Cong tien nguoi nhan
 
-            if (needSwap) {
-                // Thao tac hoan vi (Swap)
-                Account temp = accountList[i];
-                accountList[i] = accountList[j];
-                accountList[j] = temp;
-            }
+    // 5. LUU LOG GIAO DICH (Logging)
+    // Chi luu GIAO DICH GOC 1 LAN.
+    // Vi ham printTransaction da tu loai bo log nao la "In" hay "Out" dua tren targetId.
+    addTransaction(senderId, receiverId, amount, "N/A"); // Su dung "N/A" hoac bat ky gia tri nao, vi no khong duoc su dung
+
+    // 6. THONG BAO KET QUA (Output)
+    printf("\n\n*** CHUYEN KHOAN THANH CONG ***\n");
+    printf("So tien da chuyen: %0.2lf VND\n", amount);
+    printf("Nguoi gui (%s) | So du moi: %0.2lf VND\n", senderId, accountList[senderIndex].balance);
+    printf("Nguoi nhan (%s) | So du moi: %0.2lf VND\n", receiverId, accountList[receiverIndex].balance);
+}
+
+// HAM HO TRO CHUC NANG 8
+
+// In header bang lich su giao dich
+
+void printTransactionTableHeader() {
+    printf("\n+--------------------+---------------------+--------------+--------------+------------------+---------------------+\n");
+    printf("| Transaction ID     | Thoi gian           | Tai khoan doi| Loai GD      | So Tien          | Chi tiet            |\n");
+    printf("+--------------------+---------------------+--------------+--------------+------------------+---------------------+\n");
+}
+
+// CAP NHAT LOGIC HAM HO TRO IN AN
+
+//In chi tiet mot giao dich tu goc nhin cua targetId
+// trans: Cau truc giao dich can in
+//targetId: ID tai khoan dang xem lich su
+
+void printTransaction(const Transaction trans, const char* targetId) {
+    char partnerId[20];
+    char typeDisplay[20]; 
+    double displayAmount;
+
+    // Kiem tra giao dich nay la In hay Out DOI VOI targetId
+    
+    // TRUONG HOP 1: targetId la NGUOI GUI
+    if (strcmp(trans.senderId, targetId) == 0) { 
+        // Vi targetId la Nguoi Gui (Sender) nen giao dich nay la OUT
+        strcpy(partnerId, trans.receiverId); // Doi tac la nguoi nhan
+        strcpy(typeDisplay, "Out");          // Loai GD la Out
+        displayAmount = trans.amount;
+    } 
+    // TRUONG HOP 2: targetId la NGUOI NHAN
+    else if (strcmp(trans.receiverId, targetId) == 0) { 
+        // Vi targetId la Nguoi Nhan (Receiver) nen giao dich nay la IN
+        strcpy(partnerId, trans.senderId); // Doi tac la nguoi gui
+        strcpy(typeDisplay, "In");         // Loai GD la In
+        displayAmount = trans.amount;
+    } else {
+        return; // Khong phai giao dich lien quan, bo qua
+    }
+
+    // In thong tin giao dich ra bang
+    // Note: Su dung typeDisplay de xac dinh dong chu 'Chuyen tien' hay 'Nhan tien'
+    printf("| %-18s | %-19s | %-12s | %-12s | %-16.2lf | %-19s |\n",
+        trans.transId, trans.datetime, partnerId, typeDisplay, displayAmount,
+        strcmp(typeDisplay, "Out") == 0 ? "Chuyen tien" : "Nhan tien");
+}
+
+//Lich su Giao dich (View Transaction History)
+// Truy xuat va hien thi tat ca cac giao dich ma tai khoan da tham gia.
+void viewTransactionHistory() {
+    char targetId[20];
+    // Mang tam de luu cac giao dich tim thay lien quan den targetId
+    Transaction foundTransactions[200]; 
+    int foundCount = 0; // Bien dem so luong giao dich tim thay
+
+    printf("\n--- XEM LICH SU GIAO DICH ---\n");
+
+    // 1. NHAP VA KIEM TRA ID TAI KHOAN
+    while(1) {
+        printf("Nhap Account ID muon xem lich su (targetId): ");
+        fgets(targetId, sizeof(targetId), stdin);
+        targetId[strcspn(targetId, "\n")] = 0;
+
+        if (strlen(targetId) == 0) {
+            printf("Loi: Account ID khong duoc de trong.\n");
+            continue;
+        }
+        
+        // Kiem tra ton tai tai khoan (Validation)
+        if (findAccountIndex(targetId) == -1) {
+            // Sai -> Bao loi (Output That bai)
+            printf("\nLoi: Tai khoan khong ton tai.\n");
+            return; 
+        }
+        break;
+    }
+    
+    // 2. TRUY XUAT DU LIEU LICH SU
+    // Duyet qua toan bo lich su giao dich hien co
+    for (int i = 0; i < transactionCount; i++) {
+        // Kiem tra giao dich ma tai khoan tham gia (Gui di (sender) HOAC Nhan ve (receiver))
+        if (strcmp(transactionList[i].senderId, targetId) == 0 || strcmp(transactionList[i].receiverId, targetId) == 0) {
+            foundTransactions[foundCount++] = transactionList[i]; // Luu vao mang tam
         }
     }
 
-    printf("\nDa sap xep danh sach xong. Vui long chon chuc nang 5 (Danh sach) de kiem tra.\n");
+    // 3. KIEM TRA KET QUA TRUY XUAT
+    // Kiem tra co giao dich nao duoc tim thay khong
+    if (foundCount == 0) {
+        // Sai -> Thong bao khong co lich su (Output That bai)
+        printf("\nHe thong chua co giao dich nao cho tai khoan %s.\n", targetId);
+        return;
+    }
+
+    // 4. HIEN THI DANH SACH (Output Thanh cong)
+    printf("\n=> LICH SU GIAO DICH CUA TAI KHOAN %s (%d giao dich):\n", targetId, foundCount);
+    printTransactionTableHeader();
+    
+    // In tu giao dich moi nhat den cu nhat (Duyet nguoc mang foundTransactions)
+    for (int i = foundCount - 1; i >= 0; i--) {
+        printTransaction(foundTransactions[i], targetId);
+    }
+    // Dong chan bang
+    printf("+--------------------+---------------------+--------------+--------------+------------------+---------------------+\n");
 }
 
 //MENU
@@ -568,8 +829,10 @@ int main() {
 			    break;
 			case 6: sortAccounts();
 			    break;
-			case 7:
-			case 8:
+			case 7: transferMoney();
+			    break;
+			case 8: viewTransactionHistory();
+				break;
             case 0: 
 			    printf("\nCam on vi da den!\n");
 				break; 
